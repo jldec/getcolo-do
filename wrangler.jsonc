@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "cd-do-nov-5",
+	"name": "getcolo-do",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-11-05",
 	"durable_objects": {
