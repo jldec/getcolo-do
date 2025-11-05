@@ -1,15 +1,27 @@
 {
-	"name": "cd-do-nov-5",
-	"version": "0.0.0",
-	"private": true,
-	"scripts": {
-		"deploy": "wrangler deploy",
-		"dev": "wrangler dev",
-		"start": "wrangler dev",
-		"cf-typegen": "wrangler types"
-	},
-	"devDependencies": {
-		"typescript": "^5.5.2",
-		"wrangler": "^4.45.4"
-	}
+  "name": "cd-do-nov-5",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "ship": "wrangler deploy",
+    "test": "tsc && prettier --check .",
+    "format": "prettier --write .",
+    "types": "wrangler types --include-runtime false --strict-vars false",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251014.0",
+    "typescript": "^5.5.2",
+    "wrangler": "^4.45.4"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "tabWidth": 2,
+    "useTabs": false,
+    "singleQuote": true,
+    "semi": false,
+    "trailingComma": "none"
+  }
 }
