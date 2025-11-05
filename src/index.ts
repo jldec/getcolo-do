@@ -37,9 +37,10 @@ export default {
       const coloLocal = await getColo(coloName)
 
 			// always crete a new durable object (TODO should memoize id per colo)
-			const id = env.MY_DURABLE_OBJECT.newUniqueId();
-			const stub = env.MY_DURABLE_OBJECT.get(id);
+			const stub = env.MY_DURABLE_OBJECT.getByName(req.cf?.colo || 'colo');
+      const start = Date.now()
 			const coloDO = await stub.getColo(coloName)
+      coloDO['DOFetchTime'] = Date.now() - start
 
 			return new Response(JSON.stringify({ coloLocal, coloDO }), { headers: { 'Content-Type': 'application/json' } })
 		} catch (e) {
