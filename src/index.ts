@@ -87,7 +87,6 @@ async function getColo(coloName: string): Promise<Colo> {
   } catch (e) {
     throw new Error(`Error parsing JSON from ${url}: ${e}`)
   }
-  colo[coloName] = url
   colo[coloName + 'FetchTime'] = Date.now() - start
   return colo
 }

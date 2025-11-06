@@ -50,7 +50,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	// Add URL and timing information
 	fetchTime := time.Since(start).Milliseconds()
-	colo[coloName] = url
 	colo[coloName+"FetchTime"] = fetchTime
 
 	// Return the enriched JSON
