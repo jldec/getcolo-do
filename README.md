@@ -12,7 +12,6 @@ Deployed at https://getcolo-do.jldec.me/getcolo
     "region": "Tokyo",
     "country": "JP",
     "continent": "AS",
-    "getcolo": "https://getcolo.jldec.me/getcolo",
     "getcoloFetchTime": 12
   },
   "coloDO": {
@@ -21,7 +20,6 @@ Deployed at https://getcolo-do.jldec.me/getcolo
     "region": "Osaka",
     "country": "JP",
     "continent": "AS",
-    "getcolo": "https://getcolo.jldec.me/getcolo",
     "getcoloFetchTime": 5,
     "DOName": "Tokyo",
     "DOFetchTime": 22
@@ -31,7 +29,6 @@ Deployed at https://getcolo-do.jldec.me/getcolo
     "colo": "AKL",
     "continent": "OC",
     "country": "NZ",
-    "getcolo": "https://getcolo.jldec.me/getcolo",
     "getcoloFetchTime": 10,
     "region": "Auckland",
     "ContainerFetchTime": 433
@@ -50,7 +47,6 @@ Deployed at https://getcolo-do.jldec.me/getcolo
     "region": "Leinster",
     "country": "IE",
     "continent": "EU",
-    "getcolo": "https://getcolo.jldec.me/getcolo",
     "getcoloFetchTime": 14
   },
   "coloDO": {
@@ -59,7 +55,6 @@ Deployed at https://getcolo-do.jldec.me/getcolo
     "region": "England",
     "country": "GB",
     "continent": "EU",
-    "getcolo": "https://getcolo.jldec.me/getcolo",
     "getcoloFetchTime": 19,
     "DOName": "Dublin",
     "DOFetchTime": 41
@@ -69,7 +64,6 @@ Deployed at https://getcolo-do.jldec.me/getcolo
     "colo": "LIS",
     "continent": "EU",
     "country": "PT",
-    "getcolo": "https://getcolo.jldec.me/getcolo",
     "getcoloFetchTime": 10,
     "region": "Setúbal",
     "ContainerFetchTime": 107
@@ -89,7 +83,6 @@ Deployed at https://getcolo-do.jldec.me/getcolo
     "region": "Western Cape",
     "country": "ZA",
     "continent": "AF",
-    "getcolo": "https://getcolo.jldec.me/getcolo",
     "getcoloFetchTime": 17
   },
   "coloDO": {
@@ -98,7 +91,6 @@ Deployed at https://getcolo-do.jldec.me/getcolo
     "region": "Provence-Alpes-Côte d'Azur",
     "country": "FR",
     "continent": "EU",
-    "getcolo": "https://getcolo.jldec.me/getcolo",
     "getcoloFetchTime": 9,
     "DOName": "Cape Town",
     "DOFetchTime": 36
@@ -108,7 +100,6 @@ Deployed at https://getcolo-do.jldec.me/getcolo
     "colo": "MSP",
     "continent": "NA",
     "country": "US",
-    "getcolo": "https://getcolo.jldec.me/getcolo",
     "getcoloFetchTime": 11,
     "region": "Minnesota",
     "ContainerFetchTime": 281
@@ -127,7 +118,6 @@ Deployed at https://getcolo-do.jldec.me/getcolo
     "region": "Ohio",
     "country": "US",
     "continent": "NA",
-    "getcolo": "https://getcolo.jldec.me/getcolo",
     "getcoloFetchTime": 14
   },
   "coloDO": {
@@ -136,7 +126,6 @@ Deployed at https://getcolo-do.jldec.me/getcolo
     "region": "Illinois",
     "country": "US",
     "continent": "NA",
-    "getcolo": "https://getcolo.jldec.me/getcolo",
     "getcoloFetchTime": 12,
     "DOName": "Columbus",
     "DOFetchTime": 22
@@ -146,7 +135,6 @@ Deployed at https://getcolo-do.jldec.me/getcolo
     "colo": "SEA",
     "continent": "NA",
     "country": "US",
-    "getcolo": "https://getcolo.jldec.me/getcolo",
     "getcoloFetchTime": 10,
     "region": "Washington",
     "ContainerFetchTime": 120
