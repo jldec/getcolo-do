@@ -3,16 +3,10 @@ import { Container, getContainer } from '@cloudflare/containers'
 type Colo = Record<string, string | number>
 
 export class MyDurableObject extends Container<Env> {
-  // Port the container listens on
+  // container listens on
   defaultPort = 8080
-  // Time before container sleeps due to inactivity (default: 30s)
-  sleepAfter = '2m'
-  // Environment variables passed to the container
 
-  constructor(ctx: DurableObjectState<Env>, env: Env) {
-    super(ctx, env)
-  }
-
+  // RPC to getcolo from durable object
   async getColo(coloName: string): Promise<Colo> {
     return await getColo(coloName)
   }
