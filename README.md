@@ -1,5 +1,5 @@
 # getcolo-do
-This worker calls [getcolo.jldec.me](https://github.com/jldec/getcolo/blob/main/src/index.js) from the worker, from its durable object, and from its container.
+This worker calls [getcolo.jldec.me](https://github.com/jldec/getcolo/blob/main/src/index.js) from the worker, from its durable object, and from its container. It uses the city as the name/id for the DO, so that you reload and see non-cold-start latencies.
 
 Deployed at https://getcolo-do.jldec.me/getcolo
 
