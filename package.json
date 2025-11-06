@@ -10,11 +10,11 @@
     "types": "wrangler types --include-runtime false --strict-vars false",
     "tail": "wrangler tail"
   },
-  "dependencies": {},
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20251014.0",
-    "typescript": "^5.5.2",
-    "wrangler": "^4.45.4"
+    "@cloudflare/containers": "^0.0.30",
+    "@cloudflare/workers-types": "^4.20251106.1",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.46.0"
   },
   "prettier": {
     "printWidth": 100,

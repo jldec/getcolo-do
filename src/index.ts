@@ -1,28 +1,25 @@
-import { DurableObject } from "cloudflare:workers";
+import { Container, getContainer } from '@cloudflare/containers'
 
 type Colo = Record<string, string | number>
 
-export class MyDurableObject extends DurableObject<Env> {
-	constructor(ctx: DurableObjectState, env: Env) {
-		super(ctx, env);
-	}
+export class MyDurableObject extends Container<Env> {
+  // Port the container listens on
+  defaultPort = 8080
+  // Time before container sleeps due to inactivity (default: 30s)
+  sleepAfter = '2m'
+  // Environment variables passed to the container
 
-	async sayHello(name: string): Promise<string> {
-		return `Hello, ${name}!`;
-	}
+  constructor(ctx: DurableObjectState<Env>, env: Env) {
+    super(ctx, env)
+  }
 
-	async getColo(coloName: string): Promise<Colo> {
-		return await getColo(coloName)
-	}
-
-	async fetch(request: Request) {
-		return Response.json({ message: "Hello from MyDurableObject!" });
-	}
-
+  async getColo(coloName: string): Promise<Colo> {
+    return await getColo(coloName)
+  }
 }
 
 export default {
-	async fetch(req, env, ctx): Promise<Response> {
+  async fetch(req, env, ctx): Promise<Response> {
     console.log(req.method, req.url)
     const url = new URL(req.url)
     const pathname = url.pathname
@@ -32,23 +29,38 @@ export default {
       if (pathname === '/') return new Response(`Hello from ${url.origin}`)
       // Check if valid DNS hostname: RFC 1123, no dots, 1-63 chars, alphanum or hyphen, not start/end with hyphen
       // This also catches requests for favicon etc.
-      if (!/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$/.test(coloName)) throw new Error(`Invalid colo hostname ${coloName}`)
+      if (!/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$/.test(coloName))
+        throw new Error(`Invalid colo hostname ${coloName}`)
 
       const coloLocal = await getColo(coloName)
 
-			// always crete a new durable object (TODO should memoize id per colo)
-			const stub = env.MY_DURABLE_OBJECT.getByName(req.cf?.colo || 'colo');
-      const start = Date.now()
-			const coloDO = await stub.getColo(coloName)
-      coloDO['DOFetchTime'] = Date.now() - start
+      // default to city for DOName - override with 'do' query param.
+      const DOName =
+        url.searchParams.get('do') ||
+        req.cf?.city ||
+        req.cf?.region ||
+        req.cf?.country ||
+        url.hostname
+      const id = env.MY_DURABLE_OBJECT.idFromName(DOName)
+      const stub = env.MY_DURABLE_OBJECT.get(id)
 
-			return new Response(JSON.stringify({ coloLocal, coloDO }), { headers: { 'Content-Type': 'application/json' } })
-		} catch (e) {
+      const startDOCall = Date.now()
+      const coloDO = await stub.getColo(coloName)
+      coloDO['DOName'] = DOName
+      coloDO['DOFetchTime'] = Date.now() - startDOCall
+
+      const startContainerCall = Date.now()
+      const resp = await stub.fetch(req)
+      const coloContainer = (await resp.json()) as Colo
+      coloContainer['ContainerFetchTime'] = Date.now() - startContainerCall
+
+      return Response.json({ coloLocal, coloDO, coloContainer })
+    } catch (e) {
       console.log(`400 ${e}`)
       return new Response(`${e}`, { status: 400 })
     }
-	},
-} satisfies ExportedHandler<Env>;
+  }
+} satisfies ExportedHandler<Env>
 
 /**
  * GET colo JSON  with timing from `https://${coloName}.jldec.me/getcolo`
