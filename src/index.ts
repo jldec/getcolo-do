@@ -99,7 +99,9 @@ export default {
       const coloContainer = (await resp.json()) as Colo
       coloContainer['ContainerFetchTime'] = Date.now() - startContainerCall
 
-      return new Response(JSON.stringify({ coloLocal, coloDO, coloContainer }, null, 2), {
+      const returnVal = { coloLocal, coloDO, coloContainer }
+      console.log(returnVal)
+      return new Response(JSON.stringify(returnVal, null, 2), {
         headers: { 'Content-Type': 'application/json' }
       })
     } catch (e) {
