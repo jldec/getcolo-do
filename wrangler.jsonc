@@ -8,13 +8,17 @@
   },
   "containers": [
     {
-      "class_name": "MyDurableObject",
+      "class_name": "MyContainerObject",
       "image": "./Dockerfile",
       "max_instances": 10
     }
   ],
   "durable_objects": {
     "bindings": [
+      {
+        "class_name": "MyContainerObject",
+        "name": "MY_CONTAINER_OBJECT"
+      },
       {
         "class_name": "MyDurableObject",
         "name": "MY_DURABLE_OBJECT"
@@ -25,6 +29,10 @@
     {
       "new_sqlite_classes": ["MyDurableObject"],
       "tag": "v1"
+    },
+    {
+      "new_sqlite_classes": ["MyContainerObject"],
+      "tag": "v2"
     }
   ],
   "upload_source_maps": true

@@ -1,12 +1,20 @@
+import { DurableObject } from 'cloudflare:workers'
 import { Container, getContainer } from '@cloudflare/containers'
 
 type Colo = Record<string, string | number>
 
-export class MyDurableObject extends Container<Env> {
+export class MyDurableObject extends DurableObject<Env> {
+  // RPC to getcolo from this durable object
+  async getColo(coloName: string): Promise<Colo> {
+    return await getColo(coloName)
+  }
+}
+
+export class MyContainerObject extends Container<Env> {
   // container listens on
   defaultPort = 8080
 
-  // RPC to getcolo from durable object
+  // RPC to getcolo from this durable object
   async getColo(coloName: string): Promise<Colo> {
     return await getColo(coloName)
   }
@@ -18,29 +26,47 @@ export default {
     const url = new URL(req.url)
     const pathname = url.pathname
     const coloName = pathname.slice(1)
+
+    // default to city for DOName - override with 'do' query param.
+    let DOName = req.cf?.city || req.cf?.region || req.cf?.country || url.hostname
+    const overrideDOName = url.searchParams.get('do') || url.searchParams.get('DO')
+    if (overrideDOName) {
+      DOName += `-${overrideDOName}`
+    }
+
     try {
       if (req.method !== 'GET') return new Response('Method Not Allowed', { status: 405 })
+
       if (pathname === '/') return new Response(`Hello from ${url.origin}`)
+
       // Check if valid DNS hostname: RFC 1123, no dots, 1-63 chars, alphanum or hyphen, not start/end with hyphen
       // This also catches requests for favicon etc.
       if (!/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$/.test(coloName))
         throw new Error(`Invalid colo hostname ${coloName}`)
 
+      // TODO: make getColo fetches in parallel
       const coloLocal = await getColo(coloName)
 
-      // default to city for DOName - override with 'do' query param.
-      const DOName =
-        url.searchParams.get('do') ||
-        req.cf?.city ||
-        req.cf?.region ||
-        req.cf?.country ||
-        url.hostname
-      const id = env.MY_DURABLE_OBJECT.idFromName(DOName)
-      const stub = env.MY_DURABLE_OBJECT.get(id)
+      // special case e.g. 'getcolo-do?DO' or 'getcolo-do?DO=43'
+      // call getColo from DO _without_ container
+      if (url.searchParams.has('DO')) {
+        const startDOCall = Date.now()
+        const id = env.MY_DURABLE_OBJECT.idFromName(DOName)
+        const stub = env.MY_DURABLE_OBJECT.get(id)
+        const coloDO = await stub.getColo(coloName)
+        coloDO['DOName'] = `MyDurableObject ${DOName}`
+        coloDO['DOFetchTime'] = Date.now() - startDOCall
+        return new Response(JSON.stringify({ coloLocal, coloDO }, null, 2), {
+          headers: { 'Content-Type': 'application/json' }
+        })
+      }
+
+      const id = env.MY_CONTAINER_OBJECT.idFromName(DOName)
+      const stub = env.MY_CONTAINER_OBJECT.get(id)
 
       const startDOCall = Date.now()
       const coloDO = await stub.getColo(coloName)
-      coloDO['DOName'] = DOName
+      coloDO['DOName'] = `MyContainerObject ${DOName}`
       coloDO['DOFetchTime'] = Date.now() - startDOCall
 
       const startContainerCall = Date.now()
