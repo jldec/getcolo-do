@@ -127,14 +127,14 @@ async function getColoFetcher(coloName: string): Promise<Colo> {
   try {
     resp = await fetch(url)
   } catch (e) {
-    throw new Error(`${url}: ${e}`)
+    throw new Error(`getColoFetcher threw fetching ${url}: ${e}`)
   }
-  if (!resp.ok) throw new Error(`Status ${resp.status} fetching ${url}`)
+  if (!resp.ok) throw new Error(`getColoFetcher status ${resp.status} fetching ${url}`)
   let colo: Colo
   try {
     colo = (await resp.json()) as Colo
   } catch (e) {
-    throw new Error(`Error parsing JSON from ${url}: ${e}`)
+    throw new Error(`getColoFetcher error parsing JSON from ${url}: ${e}`)
   }
   colo[coloName + 'FetchTime'] = Date.now() - start
   return colo
