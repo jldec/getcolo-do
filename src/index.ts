@@ -14,6 +14,10 @@ export class MyContainerObject extends Container<Env> {
   // container listens on
   defaultPort = 8080
 
+  constructor(ctx: DurableObjectState<Env>, env: Env) {
+    super(ctx, env)
+  }
+
   // RPC to getcolo from this durable object
   async getColo(coloName: string): Promise<Colo> {
     return await getColo(coloName)
