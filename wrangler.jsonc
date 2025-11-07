@@ -4,7 +4,17 @@
   "main": "src/index.ts",
   "compatibility_date": "2025-11-05",
   "observability": {
-    "enabled": true
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false,
+      "head_sampling_rate": 1,
+      "persist": true
+    }
   },
   "containers": [
     {
