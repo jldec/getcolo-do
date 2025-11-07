@@ -4,6 +4,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2025-11-05",
   "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
     "logs": {
       "enabled": true,
       "head_sampling_rate": 1,
@@ -11,9 +13,9 @@
       "invocation_logs": true
     },
     "traces": {
-      "enabled": false,
-      "head_sampling_rate": 1,
-      "persist": true
+      "enabled": true,
+      "persist": true,
+      "head_sampling_rate": 1
     }
   },
   "containers": [
