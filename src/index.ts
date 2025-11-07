@@ -6,7 +6,14 @@ type Colo = Record<string, string | number>
 export class MyDurableObject extends DurableObject<Env> {
   // RPC to getcolo from this durable object
   async getColo(coloName: string): Promise<Colo> {
-    return await getColo(coloName)
+    try {
+      console.log(`getcolo-do MyDurableObject getColoFetcher(${coloName})`)
+      return await getColoFetcher(coloName)
+    } catch (e) {
+      const msg = `getcolo-do MyDurableObject getColo(${coloName}) ${e}`
+      console.error(msg)
+      return { error: msg }
+    }
   }
 }
 
@@ -20,13 +27,20 @@ export class MyContainerObject extends Container<Env> {
 
   // RPC to getcolo from this durable object
   async getColo(coloName: string): Promise<Colo> {
-    return await getColo(coloName)
+    try {
+      console.log(`getcolo-do MyContainerObject getColoFetcher(${coloName})`)
+      return await getColoFetcher(coloName)
+    } catch (e) {
+      const msg = `getcolo-do MyContainerObject getColo(${coloName}) ${e}`
+      console.error(msg)
+      return { error: msg }
+    }
   }
 }
 
 export default {
   async fetch(req, env, ctx): Promise<Response> {
-    console.log(req.method, req.url)
+    // console.log(req.method, req.url)
     const url = new URL(req.url)
     const pathname = url.pathname
     const coloName = pathname.slice(1)
@@ -49,7 +63,9 @@ export default {
         throw new Error(`Invalid colo hostname ${coloName}`)
 
       // TODO: make getColo fetches in parallel
-      const coloLocal = await getColo(coloName)
+
+      console.log(`getcolo-do getColoFetcher(${coloName})`)
+      const coloLocal = await getColoFetcher(coloName)
 
       // special case e.g. 'getcolo-do?DO' or 'getcolo-do?DO=43'
       // call getColo from DO _without_ container
@@ -58,6 +74,7 @@ export default {
         const id = env.MY_DURABLE_OBJECT.idFromName(DOName)
         const stub = env.MY_DURABLE_OBJECT.get(id)
         const coloDO = await stub.getColo(coloName)
+        if (coloDO.error) throw new Error(coloDO.error as string)
         coloDO['DOName'] = `MyDurableObject ${DOName}`
         coloDO['DOFetchTime'] = Date.now() - startDOCall
         return new Response(JSON.stringify({ coloLocal, coloDO }, null, 2), {
@@ -68,13 +85,19 @@ export default {
       const id = env.MY_CONTAINER_OBJECT.idFromName(DOName)
       const stub = env.MY_CONTAINER_OBJECT.get(id)
 
+      // call getColo from DO with container
       const startDOCall = Date.now()
       const coloDO = await stub.getColo(coloName)
+      if (coloDO.error) throw new Error(coloDO.error as string)
       coloDO['DOName'] = `MyContainerObject ${DOName}`
       coloDO['DOFetchTime'] = Date.now() - startDOCall
 
+      // call getColo from container
       const startContainerCall = Date.now()
       const resp = await stub.fetch(req)
+      if (!resp.ok) {
+        throw new Error(`${resp.status} fetching ${url.pathname}${url.search} from container`)
+      }
       const coloContainer = (await resp.json()) as Colo
       coloContainer['ContainerFetchTime'] = Date.now() - startContainerCall
 
@@ -97,7 +120,7 @@ export default {
  *
  * @param coloName - subdomain of jldec.me to query
  */
-async function getColo(coloName: string): Promise<Colo> {
+async function getColoFetcher(coloName: string): Promise<Colo> {
   const url = `https://${coloName}.jldec.me/getcolo`
   const start = Date.now()
   let resp: Response | undefined

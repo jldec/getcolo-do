@@ -56,10 +56,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(colo)
 }
 
-func errorHandler(w http.ResponseWriter, r *http.Request) {
-	panic("This is a panic")
-}
-
 func main() {
 	// Listen for SIGINT and SIGTERM
 	stop := make(chan os.Signal, 1)
