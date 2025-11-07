@@ -7,7 +7,6 @@ export class MyDurableObject extends DurableObject<Env> {
   // RPC to getcolo from this durable object
   async getColo(coloName: string): Promise<Colo> {
     try {
-      console.log(`getcolo-do MyDurableObject getColoFetcher(${coloName})`)
       return await getColoFetcher(coloName)
     } catch (e) {
       const msg = `getcolo-do MyDurableObject getColo(${coloName}) ${e}`
@@ -28,7 +27,6 @@ export class MyContainerObject extends Container<Env> {
   // RPC to getcolo from this durable object
   async getColo(coloName: string): Promise<Colo> {
     try {
-      console.log(`getcolo-do MyContainerObject getColoFetcher(${coloName})`)
       return await getColoFetcher(coloName)
     } catch (e) {
       const msg = `getcolo-do MyContainerObject getColo(${coloName}) ${e}`
@@ -40,31 +38,30 @@ export class MyContainerObject extends Container<Env> {
 
 export default {
   async fetch(req, env, ctx): Promise<Response> {
-    // console.log(req.method, req.url)
+    if (req.method !== 'GET') return new Response('Method not allowed', { status: 405 })
     const url = new URL(req.url)
-    const pathname = url.pathname
-    const coloName = pathname.slice(1)
 
-    // default to city for DOName - override with 'do' query param.
-    let DOName = req.cf?.city || req.cf?.region || req.cf?.country || url.hostname
+    // default to 'getcolo.jldec.me' for getColo endpoint (see getColoFetcher)
+    let coloName: string
+    if (url.pathname === '/') {
+      coloName = 'getcolo'
+    } else {
+      coloName = url.pathname.slice(1)
+      // Check if valid DNS hostname: RFC 1123, no dots, 1-63 chars, alphanum or hyphen, not start/end with hyphen
+      // This also catches requests for favicon etc.
+      if (!/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$/.test(coloName))
+        throw new Error(`Invalid colo hostname ${coloName}`)
+    }
+
+    // default to cf.colo for DOName - override with 'do' or 'DO' query param suffix
+    let DOName = req.cf?.colo || url.hostname
     const overrideDOName = url.searchParams.get('do') || url.searchParams.get('DO')
     if (overrideDOName) {
       DOName += `-${overrideDOName}`
     }
 
     try {
-      if (req.method !== 'GET') return new Response('Method Not Allowed', { status: 405 })
-
-      if (pathname === '/') return new Response(`Hello from ${url.origin}`)
-
-      // Check if valid DNS hostname: RFC 1123, no dots, 1-63 chars, alphanum or hyphen, not start/end with hyphen
-      // This also catches requests for favicon etc.
-      if (!/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$/.test(coloName))
-        throw new Error(`Invalid colo hostname ${coloName}`)
-
       // TODO: make getColo fetches in parallel
-
-      console.log(`getcolo-do getColoFetcher(${coloName})`)
       const coloLocal = await getColoFetcher(coloName)
 
       // special case e.g. 'getcolo-do?DO' or 'getcolo-do?DO=43'
@@ -94,9 +91,10 @@ export default {
 
       // call getColo from container
       const startContainerCall = Date.now()
-      const resp = await stub.fetch(req)
+      const containerUrl = `${url.origin}/${coloName}${url.search}`
+      const resp = await stub.fetch(containerUrl)
       if (!resp.ok) {
-        throw new Error(`${resp.status} fetching ${url.pathname}${url.search} from container`)
+        throw new Error(`${resp.status} fetching ${containerUrl} from container`)
       }
       const coloContainer = (await resp.json()) as Colo
       coloContainer['ContainerFetchTime'] = Date.now() - startContainerCall
@@ -105,7 +103,7 @@ export default {
         headers: { 'Content-Type': 'application/json' }
       })
     } catch (e) {
-      console.log(`400 ${e}`)
+      console.error(`${e}`)
       return new Response(`${e}`, { status: 400 })
     }
   }
