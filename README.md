@@ -1,9 +1,9 @@
 # getcolo-do
-This worker calls [getcolo.jldec.me](https://github.com/jldec/getcolo/blob/main/src/index.js) from the worker, from its durable object, and from its container.
+This worker calls [getcolo.jldec.me](https://github.com/jldec/getcolo/blob/main/src/index.js) to gather colo and request location details for the worker in `coloLocal`, durable object in `coloDO`, and a container in `coloContainer`. The `colo` is usually (but not always) located in the city where the request originated. Latency times are in _ms_.
 
-It uses the colo of the originating worker as the name/id for the DO. Reload your browser to see non-cold-start latencies. To activate a new DO and container, pass a suffix in a query param like `?do=<xx>`. Passing an uppercase `DO` query param will activate a DO without a container.
+<img width="2200" height="1164" alt="Screenshot 2025-11-08 at 11 51 03" src="https://github.com/user-attachments/assets/5758c077-348c-4938-8f63-82098a1febaf" />
 
-Latency times are in _ms_.
+The implemenation uses the colo of the originating worker as the name/id for the DO. Reload your browser to see non-cold-start latencies. To activate a new DO and container, pass a suffix in a query param like `?do=<xx>`. Passing an uppercase `DO` query param will activate a DO without a container.
 
 Deployed at https://getcolo-do.jldec.me
 
