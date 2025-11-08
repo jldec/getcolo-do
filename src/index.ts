@@ -6,33 +6,33 @@ type Colo = Record<string, string | number>
 export class MyDurableObject extends DurableObject<Env> {
   // RPC to getcolo from this durable object
   async getColo(coloName: string): Promise<Colo> {
-    try {
-      return await getColoFetcher(coloName)
-    } catch (e) {
-      const msg = `getcolo-do MyDurableObject getColo(${coloName}) ${e}`
-      console.error(msg)
-      return { error: msg }
-    }
+    return await getColoFetcher(coloName)
   }
 }
 
 export class MyContainerObject extends Container<Env> {
   // container listens on
   defaultPort = 8080
-
-  constructor(ctx: DurableObjectState<Env>, env: Env) {
-    super(ctx, env)
+  name = 'unknown'
+  // Optional lifecycle hooks
+  override onStart() {
+    console.log(`Container ${this.name} started`)
   }
-
+  override onStop() {
+    console.log(`Container ${this.name} shut down`)
+  }
+  override onError(error: unknown) {
+    console.log(`Container ${this.name} error: ${error}`)
+  }
   // RPC to getcolo from this durable object
   async getColo(coloName: string): Promise<Colo> {
-    try {
-      return await getColoFetcher(coloName)
-    } catch (e) {
-      const msg = `getcolo-do MyContainerObject getColo(${coloName}) ${e}`
-      console.error(msg)
-      return { error: msg }
-    }
+    return await getColoFetcher(coloName)
+  }
+  async getContainerName(): Promise<string> {
+    return this.name
+  }
+  async setContainerName(name: string): Promise<void> {
+    this.name = name
   }
 }
 
@@ -49,8 +49,9 @@ export default {
       coloName = url.pathname.slice(1)
       // Check if valid DNS hostname: RFC 1123, no dots, 1-63 chars, alphanum or hyphen, not start/end with hyphen
       // This also catches requests for favicon etc.
-      if (!/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$/.test(coloName))
-        throw new Error(`Invalid colo hostname ${coloName}`)
+      if (!/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$/.test(coloName)) {
+        return new Response(`Bad request /${coloName}`, { status: 400 })
+      }
     }
 
     // default to cf.colo for DOName - override with 'do' or 'DO' query param suffix
@@ -64,48 +65,51 @@ export default {
       // TODO: make getColo fetches in parallel
       const coloLocal = await getColoFetcher(coloName)
 
-      // special case e.g. 'getcolo-do?DO' or 'getcolo-do?DO=43'
-      // call getColo from DO _without_ container
-      if (url.searchParams.has('DO')) {
+      // default to DO _without_ container
+      // use 'do' search param to override non-container DOName e.g. 'getcolo-do?do=42'
+      // use 'DO' search param to force container DO e.g. 'getcolo-do?DO' or 'getcolo-do?DO=43'
+      if (!url.searchParams.has('DO')) {
         const startDOCall = Date.now()
         const id = env.MY_DURABLE_OBJECT.idFromName(DOName)
         const stub = env.MY_DURABLE_OBJECT.get(id)
-        const coloDO = await stub.getColo(coloName)
-        if (coloDO.error) throw new Error(coloDO.error as string)
+        const coloDO = await stub.getColo(coloName) // may return {error}
         coloDO['DOName'] = `MyDurableObject ${DOName}`
         coloDO['DOFetchTime'] = Date.now() - startDOCall
-        return new Response(JSON.stringify({ coloLocal, coloDO }, null, 2), {
-          headers: { 'Content-Type': 'application/json' }
-        })
+        return json({ coloLocal, coloDO })
       }
 
+      // container DO
       const id = env.MY_CONTAINER_OBJECT.idFromName(DOName)
       const stub = env.MY_CONTAINER_OBJECT.get(id)
+      await stub.setContainerName(DOName)
 
-      // call getColo from DO with container
+      // RPC call getColo from container DO
       const startDOCall = Date.now()
-      const coloDO = await stub.getColo(coloName)
-      if (coloDO.error) throw new Error(coloDO.error as string)
+      const coloDO = await stub.getColo(coloName) // may return {error}
       coloDO['DOName'] = `MyContainerObject ${DOName}`
       coloDO['DOFetchTime'] = Date.now() - startDOCall
 
-      // call getColo from container
+      // return response if DO query param value is empty
+      if (url.searchParams.get('DO') === '') {
+        return json({ coloLocal, coloDO })
+      }
+
+      // call container only if DO query param value is non empty
       const startContainerCall = Date.now()
       const containerUrl = `${url.origin}/${coloName}${url.search}`
       const resp = await stub.fetch(containerUrl)
+      let coloContainer: Colo | undefined
       if (!resp.ok) {
-        throw new Error(`${resp.status} fetching ${containerUrl} from container`)
+        coloContainer = {
+          error: `${resp.status} fetching ${containerUrl} from container: ${await resp.text()}`
+        }
+      } else {
+        coloContainer = (await resp.json()) as Colo
       }
-      const coloContainer = (await resp.json()) as Colo
       coloContainer['ContainerFetchTime'] = Date.now() - startContainerCall
-
-      const returnVal = { coloLocal, coloDO, coloContainer }
-      console.log(returnVal)
-      return new Response(JSON.stringify(returnVal, null, 2), {
-        headers: { 'Content-Type': 'application/json' }
-      })
+      return json({ coloLocal, coloDO, coloContainer })
     } catch (e) {
-      console.error(`${e}`)
+      console.log(`${e}`)
       return new Response(`${e}`, { status: 400 })
     }
   }
@@ -119,6 +123,7 @@ export default {
  * - <instance-name>.jldec.me: server in a specific city
  *
  * @param coloName - subdomain of jldec.me to query
+ * @returns Colo object with timing information or { error }
  */
 async function getColoFetcher(coloName: string): Promise<Colo> {
   const url = `https://${coloName}.jldec.me/getcolo`
@@ -127,15 +132,23 @@ async function getColoFetcher(coloName: string): Promise<Colo> {
   try {
     resp = await fetch(url)
   } catch (e) {
-    throw new Error(`getColoFetcher threw fetching ${url}: ${e}`)
+    return { error: `cannot fetch ${url}: ${e}` }
   }
-  if (!resp.ok) throw new Error(`getColoFetcher status ${resp.status} fetching ${url}`)
+  if (!resp.ok) return { error: `${resp.status} fetching ${url}` }
   let colo: Colo
   try {
     colo = (await resp.json()) as Colo
   } catch (e) {
-    throw new Error(`getColoFetcher error parsing JSON from ${url}: ${e}`)
+    return { error: `error parsing JSON from ${url}: ${e}` }
   }
   colo[coloName + 'FetchTime'] = Date.now() - start
   return colo
+}
+
+/** helper to return JSON response with logging */
+function json(returnVal: any) {
+  // console.log(returnVal)
+  return new Response(JSON.stringify(returnVal, null, 2), {
+    headers: { 'Content-Type': 'application/json' }
+  })
 }
