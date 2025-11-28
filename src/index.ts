@@ -3,6 +3,10 @@ import { Container, getContainer } from '@cloudflare/containers'
 
 type Colo = Record<string, string | number>
 
+async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 export class MyDurableObject extends DurableObject<Env> {
   // RPC to getcolo from this durable object
   async getColo(coloName: string): Promise<Colo> {
@@ -69,10 +73,12 @@ export default {
       // use 'do' search param to override non-container DOName e.g. 'getcolo-do?do=42'
       // use 'DO' search param to force container DO e.g. 'getcolo-do?DO' or 'getcolo-do?DO=43'
       if (!url.searchParams.has('DO')) {
-        const startDOCall = Date.now()
+        const startDO = Date.now()
         const id = env.MY_DURABLE_OBJECT.idFromName(DOName)
         const stub = env.MY_DURABLE_OBJECT.get(id)
-        const getIdTime = Date.now() - startDOCall
+        const getIdTime = Date.now() - startDO
+        await sleep(1000)
+        const startDOCall = Date.now()
         const coloDO = await stub.getColo(coloName) // may return {error}
         coloDO['DOFetchTime'] = Date.now() - startDOCall
         coloDO['DOGetIdTime'] = getIdTime
