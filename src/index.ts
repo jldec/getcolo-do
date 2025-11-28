@@ -77,7 +77,7 @@ export default {
         const id = env.MY_DURABLE_OBJECT.idFromName(DOName)
         const stub = env.MY_DURABLE_OBJECT.get(id)
         const getIdTime = Date.now() - startDO
-        await sleep(1000)
+        // await sleep(1000) // experiment determines if name lookup is eager in the background or lazy
         const startDOCall = Date.now()
         const coloDO = await stub.getColo(coloName) // may return {error}
         coloDO['DOFetchTime'] = Date.now() - startDOCall
