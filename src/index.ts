@@ -72,22 +72,26 @@ export default {
         const startDOCall = Date.now()
         const id = env.MY_DURABLE_OBJECT.idFromName(DOName)
         const stub = env.MY_DURABLE_OBJECT.get(id)
+        const getIdTime = Date.now() - startDOCall
         const coloDO = await stub.getColo(coloName) // may return {error}
-        coloDO['DOName'] = `MyDurableObject ${DOName}`
         coloDO['DOFetchTime'] = Date.now() - startDOCall
+        coloDO['DOGetIdTime'] = getIdTime
+        coloDO['DOName'] = `MyDurableObject ${DOName}`
         return json({ coloLocal, coloDO })
       }
 
       // container DO
+      const startDOCall = Date.now()
       const id = env.MY_CONTAINER_OBJECT.idFromName(DOName)
       const stub = env.MY_CONTAINER_OBJECT.get(id)
+      const getIdTime = Date.now() - startDOCall
       await stub.setContainerName(DOName)
 
       // RPC call getColo from container DO
-      const startDOCall = Date.now()
       const coloDO = await stub.getColo(coloName) // may return {error}
-      coloDO['DOName'] = `MyContainerObject ${DOName}`
       coloDO['DOFetchTime'] = Date.now() - startDOCall
+      coloDO['DOGetIdTime'] = getIdTime
+      coloDO['DOName'] = `MyContainerObject ${DOName}`
 
       // return response if DO query param value is empty
       if (url.searchParams.get('DO') === '') {
